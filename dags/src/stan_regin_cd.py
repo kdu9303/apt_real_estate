@@ -12,6 +12,14 @@ from utils import (
     remove_file_from_local,
 )
 
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+)
+logger = logging.getLogger(__name__)
+
+load_dotenv()
+
 
 @dataclass
 class StanReginCd:
@@ -33,15 +41,6 @@ class StanReginCd:
     locallow_nm: str  # 최하위지역명
     adpt_de: str  # 생성일(YYYYMMDD)
     stan_regin_cd_id: str = ""  # 유니크 해시 키
-
-
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
-)
-logger = logging.getLogger(__name__)
-
-load_dotenv()
 
 
 class StanReginCdList:
