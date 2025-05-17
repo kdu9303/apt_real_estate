@@ -48,6 +48,8 @@ class StanReginCdList:
         self.service_key = os.getenv("OPENAPI_API_KEY")
         self.base_url = "http://apis.data.go.kr/1741000/StanReginCd/getStanReginCdList?"
 
+        self.session = requests.Session()
+
     def fetch_stan_regin_cd(
         self, locatadd_nm, pageNo: int, numOfRows: int = 1000
     ) -> tuple[list[dict], int]:
@@ -59,9 +61,8 @@ class StanReginCdList:
             "numOfRows": numOfRows,
             "serviceKey": self.service_key,
         }
-        s = requests.Session()
 
-        response = s.get(
+        response = self.session.get(
             url=self.base_url,
             params=params,
             impersonate="chrome",

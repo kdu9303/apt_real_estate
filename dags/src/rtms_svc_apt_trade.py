@@ -59,6 +59,8 @@ class AptTradeList:
         self.base_url = (
             "http://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade?"
         )
+
+        self.session = requests.Session()
         """
         self.headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -76,8 +78,7 @@ class AptTradeList:
             "numOfRows": numOfRows,
             "serviceKey": self.service_key,
         }
-        s = requests.Session()
-        response = s.get(
+        response = self.session.get(
             url=self.base_url,
             params=params,
             impersonate="chrome",
@@ -130,25 +131,27 @@ if __name__ == "__main__":
     apt_list = AptTradeList()
 
     sggCd_dict = {
-        # "서초구": "11650",
+        "서초구": "11650",
         "송파구": "11710",
-        # "강남구": "11680",
-        # "강동구": "11740",
-        # "용산구": "11170",
+        "강남구": "11680",
+        "강동구": "11740",
+        "용산구": "11170",
     }
 
-    year = 2018
-    for sgg_name, sggCd in sggCd_dict.items():
-        apt_data_list = apt_list.concat_apt_trade_data_list(year, sggCd)
+    years = [2021]
 
-        file_name = f"apt_trade_{sgg_name}_{year}"
-        save_file_to_local(data=apt_data_list, file_name=file_name)
+    for year in years:
+        for sgg_name, sggCd in sggCd_dict.items():
+            apt_data_list = apt_list.concat_apt_trade_data_list(year, sggCd)
 
-        upload_data_to_obj_storage(
-            bucket_name="bronze",
-            dir_path="apt_trade",
-            file_name=file_name,
-            partition_key=year,
-        )
+            file_name = f"apt_trade_{sgg_name}_{year}"
+            save_file_to_local(data=apt_data_list, file_name=file_name)
+
+            upload_data_to_obj_storage(
+                bucket_name="bronze",
+                dir_path="apt_trade",
+                file_name=file_name,
+                partition_key=year,
+            )
 
     remove_file_from_local()

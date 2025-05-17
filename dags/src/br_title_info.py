@@ -116,6 +116,8 @@ class BrTitleInfoList:
             "http://apis.data.go.kr/1613000/BldRgstHubService/getBrTitleInfo?"
         )
 
+        self.session = requests.Session()
+
     def fetch_br_title_info(
         self, sigunguCd: str, bjdongCd: str, pageNo: int = 1, numOfRows: int = 1_000_000
     ) -> tuple[list[dict], int]:
@@ -129,9 +131,8 @@ class BrTitleInfoList:
             "numOfRows": numOfRows,
             "serviceKey": self.service_key,
         }
-        s = requests.Session()
 
-        response = s.get(
+        response = self.session.get(
             url=self.base_url,
             params=params,
             impersonate="chrome",
