@@ -1,2 +1,4 @@
 dbt-core
 dbt-duckdb
+dbt-trino
+dbt-athena

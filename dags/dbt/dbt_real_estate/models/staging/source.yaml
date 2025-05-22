@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: src_trino
+    schema: real-estate
+    database: hive
+    description: "real-estate-raw 버킷에 저장된 parquet 파일"
+
+    tables:
+      - name: source_apt_trade
+        identifier: source_apt_trade
+        description: "아파트 매매 실거래가 데이터"
+      - name: source_stan_regin_cd
+        identifier: source_stan_regin_cd
+        description: "법정동코드 데이터"
+  

@@ -1,0 +1,10 @@
+
+version: 2
+
+models:
+  - name: dim_stan_regin_cd
+    description: "시군구 법정동 포함 코드"
+  - name: dim_stan_regin_cd_gu
+    description: "시군구 코드만 포함 코드"
+  - name: mart_apt_trade
+    description: "아파트 매매 실거래가"
