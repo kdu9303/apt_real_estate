@@ -1,8 +1,11 @@
 # Astro Runtime includes the following pre-installed providers packages: https://www.astronomer.io/docs/astro/runtime-image-architecture#provider-packages
-rich
+rich==13.9.4
 python-dotenv
 xmltodict
 astronomer-cosmos
 curl-cffi>=0.11.1
 duckdb>=1.2.2
 polars==1.29.0
+pyiceberg==0.9.1
+pyiceberg[s3fs, glue]==0.9.1
+boto3
