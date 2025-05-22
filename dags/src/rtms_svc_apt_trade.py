@@ -1,5 +1,6 @@
 import os
 import xmltodict
+import polars as pl
 from time import sleep
 from rich import print
 from dataclasses import dataclass
@@ -11,7 +12,7 @@ from utils import (
     create_hash_key,
     save_file_to_local,
     remove_file_from_local,
-    upload_data_to_obj_storage,
+    upload_data_to_obj_storage_polars,
 )
 
 
@@ -91,6 +92,10 @@ class AptTradeList:
         )
 
         if response_body["totalCount"] == "0":
+            logger.info("해당 요청에 대한 데이터가 없습니다.")
+            return
+
+        if parsed_response["response"]["header"]["resultCode"] != "00":
             logger.error(f"Error Message: {parsed_response['response']['header']}")
             raise Exception("요청 데이터가 없거나 잘못된 요청입니다.")
 
@@ -105,15 +110,16 @@ class AptTradeList:
         obj = RTMSDataSvcAptTrade(**item_dict)
         return create_hash_key(obj)
 
-    def concat_apt_trade_data_list(
-        self, year: int, sggCd: str
-    ) -> list[RTMSDataSvcAptTrade]:
+    def concat_apt_trade_data_list(self, year: int, sggCd: str) -> pl.DataFrame:
         """1년치의 데이터를 모두 합치는 함수"""
         apt_data_list = []
         year_month_list = create_yyyymm_form_date_list(year)
 
         for year_month in year_month_list:
             api_data = self.fetch_apt_trade(sggCd, year_month)
+            if api_data is None:
+                continue
+
             sleep(0.8)
             # api_data가 리스트 또는 단일 dict일 수 있음
             if isinstance(api_data, list):
@@ -124,7 +130,8 @@ class AptTradeList:
                 api_data["aptTradeId"] = self._create_unique_key(api_data)
                 apt_data_list.append(api_data)
 
-        return apt_data_list
+        # return apt_data_list
+        return pl.DataFrame(apt_data_list)
 
 
 if __name__ == "__main__":
@@ -138,20 +145,33 @@ if __name__ == "__main__":
         "용산구": "11170",
     }
 
-    years = [2021]
+    years = [2024, 2025]
 
     for year in years:
         for sgg_name, sggCd in sggCd_dict.items():
             apt_data_list = apt_list.concat_apt_trade_data_list(year, sggCd)
 
             file_name = f"apt_trade_{sgg_name}_{year}"
-            save_file_to_local(data=apt_data_list, file_name=file_name)
+            # save_file_to_local(data=apt_data_list, file_name=file_name)
 
-            upload_data_to_obj_storage(
-                bucket_name="bronze",
+            # upload_data_to_obj_storage_polars(
+            #     df=apt_data_list,
+            #     bucket_name="bronze",
+            #     dir_path="apt_trade",
+            #     file_name=file_name,
+            #     key=os.getenv("MINIO_ACCESS_KEY"),
+            #     secret=os.getenv("MINIO_SECRET_KEY"),
+            #     partition_key=year,
+            # )
+            upload_data_to_obj_storage_polars(
+                df=apt_data_list,
+                endpoint_type="aws",
+                bucket_name="real-estate-raw",
                 dir_path="apt_trade",
                 file_name=file_name,
+                key=os.getenv("AWS_ACCESS_KEY_ID"),
+                secret=os.getenv("AWS_SECRET_ACCESS_KEY"),
                 partition_key=year,
             )
 
-    remove_file_from_local()
+    # remove_file_from_local()

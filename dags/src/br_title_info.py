@@ -1,17 +1,21 @@
 import os
-import json
+import random
 import logging
 import xmltodict
+import polars as pl
+from time import sleep
 from rich import print
 from dotenv import load_dotenv
 from curl_cffi import requests
 from dataclasses import dataclass
 from utils import (
     create_hash_key,
-    save_file_to_local,
-    upload_data_to_obj_storage,
-    remove_file_from_local,
+    create_catalog,
+    fetch_iceberg_table_to_polars,
+    upload_data_to_obj_storage_polars,
+    trigger_aws_glue_crawler,
 )
+# from utils import create_catalog
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -119,14 +123,14 @@ class BrTitleInfoList:
         self.session = requests.Session()
 
     def fetch_br_title_info(
-        self, sigunguCd: str, bjdongCd: str, pageNo: int = 1, numOfRows: int = 1_000_000
-    ) -> tuple[list[dict], int]:
+        self, sigunguCd: str, bjdongCd: str, pageNo: int = 1, numOfRows: int = 100
+    ) -> tuple[list[dict], int, int]:
         """
         건축물대장 표제부 조회 데이터 조회
         """
         params = {
-            "sigunguCd": sigunguCd,  # 시군구코드
-            "bjdongCd": bjdongCd,  # 법정동코드
+            "sigunguCd": sigunguCd,
+            "bjdongCd": bjdongCd,
             "pageNo": pageNo,
             "numOfRows": numOfRows,
             "serviceKey": self.service_key,
@@ -142,15 +146,31 @@ class BrTitleInfoList:
         response_header = parsed_response["response"]["header"]
         response_body = parsed_response["response"]["body"]
 
-        logger.info(
-            f"시군구코드: {sigunguCd}, 법정동코드: {bjdongCd}, 총 건수: {response_body['totalCount']}"
-        )
+        total_count = int(response_body["totalCount"])
+        total_pages = (total_count + numOfRows - 1) // numOfRows
 
-        if response_body["totalCount"] == "0" or response_header["resultCode"] != "00":
+        # 데이터가 없으면 None, 0, 빈 리스트 등으로 반환
+        if (
+            total_count == 0
+            or response_body.get("items") is None
+            or response_body["items"] is None
+        ):
+            return None, 0, 0
+
+        if response_header["resultCode"] != "00":
             logger.error(f"Error Message: {response_header}")
             raise Exception("요청 데이터가 없거나 잘못된 요청입니다.")
 
-        return response_body["items"]["item"]
+        # items가 dict가 아닐 수도 있으니, 안전하게 처리
+        items = response_body["items"].get("item")
+        if items is None:
+            return None, total_pages, total_count
+
+        # 단일 dict일 수도 있고, list일 수도 있음
+        if isinstance(items, dict):
+            items = [items]
+
+        return items, total_pages, total_count
 
     def _create_unique_key(self, item_dict):
         # dict를 BrTitleInfo dataclass로 변환 후 해시 생성
@@ -161,26 +181,91 @@ class BrTitleInfoList:
         obj = BrTitleInfo(**item_dict)
         return create_hash_key(obj)
 
-    def concat_br_title_info_data_list(
-        self, sigunguCd: str, bjdongCd_list: list[str]
-    ) -> list[BrTitleInfo]:
+    def concat_br_title_info_data_list(self, address_df: pl.DataFrame) -> pl.DataFrame:
         """시군구코드 기준 모든 법정동 데이터를 합치는 함수"""
         br_title_info_data_list = []
 
-        for bjdongCd in bjdongCd_list:
-            bjdong_list = self.fetch_br_title_info(sigunguCd, bjdongCd)
-            for item in bjdong_list:
-                item["br_title_info_id"] = self._create_unique_key(item)
-                br_title_info_data_list.append(item)
+        for row in address_df.iter_rows(named=True):
+            bjdong_list, total_pages, total_count = self.fetch_br_title_info(
+                sigunguCd=row["gu_cd"], bjdongCd=row["bjdong_cd"]
+            )
 
-        return br_title_info_data_list
+            if bjdong_list is None:
+                continue
+
+            for page in range(1, total_pages + 1):
+                bjdong_list, _, _ = self.fetch_br_title_info(
+                    sigunguCd=row["gu_cd"],
+                    bjdongCd=row["bjdong_cd"],
+                    pageNo=page,
+                    numOfRows=100,
+                )
+
+                if bjdong_list is None:
+                    continue
+
+                for item in bjdong_list:
+                    item["br_title_info_id"] = self._create_unique_key(item)
+                    br_title_info_data_list.append(item)
+
+                logger.info(
+                    f"시군구코드: {row['gu_cd']}, 법정동코드: {row['bjdong_cd']}, TotalPage: {total_pages},  currentPage: {page}, totalCount: {total_count}"
+                )
+
+                sleep(random.uniform(0.6, 0.9))
+
+        return pl.DataFrame(br_title_info_data_list)
 
 
 if __name__ == "__main__":
-    br_title_info_list = BrTitleInfoList()
+    storage_options = {
+        "s3.region": "ap-northeast-2",
+        "s3.access-key-id": os.getenv("AWS_ACCESS_KEY_ID"),
+        "s3.secret-access-key": os.getenv("AWS_SECRET_ACCESS_KEY"),
+    }
 
-    print(
-        br_title_info_list.fetch_br_title_info(
-            sigunguCd="11680", bjdongCd="10300", pageNo=2, numOfRows=100_000_000
-        )
-    )
+    # sigungu_cd_df = fetch_iceberg_table_to_polars(
+    #     catalog=create_catalog("glue"),
+    #     namespace="mart-real-estate",
+    #     table_name="dim_stan_regin_cd",
+    #     storage_options=storage_options,
+    # )
+
+    # sigungu_cd_df_filtered = sigungu_cd_df.select(
+    #     pl.col("gu_cd"),
+    #     pl.col("bjdong_cd"),
+    # ).collect()
+
+    sggCd_dict = {
+        "서초구": "11650",
+        "송파구": "11710",
+        "강남구": "11680",
+        "강동구": "11740",
+        "용산구": "11170",
+    }
+
+    # br_title_info_list = BrTitleInfoList()
+
+    # for sgg_name, sggCd in sggCd_dict.items():
+    #     print(f"시군구코드: {sgg_name} 진행중")
+    #     address_df = sigungu_cd_df_filtered.filter(pl.col("gu_cd") == sggCd)
+    #     print(address_df.shape)
+
+    #     br_title_info_df = br_title_info_list.concat_br_title_info_data_list(
+    #         address_df = address_df
+    #     )
+
+    #     file_name = f"br_title_info_{sgg_name}"
+
+    #     upload_data_to_obj_storage_polars(
+    #         df=br_title_info_df,
+    #         endpoint_type="aws",
+    #         bucket_name="real-estate-raw",
+    #         dir_path="br_title_info",
+    #         file_name=file_name,
+    #         key=os.getenv("AWS_ACCESS_KEY_ID"),
+    #         secret=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    #         partition_key=sggCd,
+    #     )
+
+    # trigger_aws_glue_crawler(crawler_name="real-estate-raw-crawler")

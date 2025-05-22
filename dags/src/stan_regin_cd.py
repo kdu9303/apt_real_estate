@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import polars as pl
 from rich import print
 from dotenv import load_dotenv
 from curl_cffi import requests
@@ -8,7 +9,7 @@ from dataclasses import dataclass
 from utils import (
     create_hash_key,
     save_file_to_local,
-    upload_data_to_obj_storage,
+    upload_data_to_obj_storage_polars,
     remove_file_from_local,
 )
 
@@ -86,7 +87,7 @@ class StanReginCdList:
         total_count = head[0]["totalCount"]
         total_pages = (total_count + numOfRows - 1) // numOfRows
 
-        logger.info(f"totalCount: {total_count}, totalPages: {total_pages}")
+        # logger.info(f"totalCount: {total_count}, totalPages: {total_pages}")
 
         if total_count == "0":
             logger.error(f"Error Code: {parsed_response.get('RESULT')}")
@@ -103,7 +104,7 @@ class StanReginCdList:
         obj = StanReginCd(**item_dict)
         return create_hash_key(obj)
 
-    def concat_stan_regin_cd_list(self, locatadd_nm: str) -> list[StanReginCd]:
+    def concat_stan_regin_cd_list(self, locatadd_nm: str) -> pl.DataFrame:
         stan_regin_cd_list, total_pages = self.fetch_stan_regin_cd(
             locatadd_nm=locatadd_nm, pageNo=1
         )
@@ -117,7 +118,9 @@ class StanReginCdList:
         for item in stan_regin_cd_list:
             item["stan_regin_cd_id"] = self._create_unique_key(item)
 
-        return stan_regin_cd_list
+        logger.info(f"totalCount: {len(stan_regin_cd_list)}, totalPages: {total_pages}")
+
+        return pl.DataFrame(stan_regin_cd_list)
 
 
 if __name__ == "__main__":
@@ -131,12 +134,16 @@ if __name__ == "__main__":
         concat_list = stan_regin_cd_list.concat_stan_regin_cd_list(region)
 
         file_name = f"stan_regin_cd_{region_eng}"
-        save_file_to_local(data=concat_list, file_name=file_name)
+        # save_file_to_local(data=concat_list, file_name=file_name)
 
-        upload_data_to_obj_storage(
-            bucket_name="bronze",
+        upload_data_to_obj_storage_polars(
+            df=concat_list,
+            endpoint_type="aws",
+            bucket_name="real-estate-raw",
             dir_path="stan_regin_cd",
             file_name=file_name,
+            key=os.getenv("AWS_ACCESS_KEY_ID"),
+            secret=os.getenv("AWS_SECRET_ACCESS_KEY"),
             partition_key=region_eng,
         )
-    remove_file_from_local()
+    # remove_file_from_local()
