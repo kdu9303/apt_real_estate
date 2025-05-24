@@ -6,5 +6,11 @@ models:
     description: "시군구 법정동 포함 코드"
   - name: dim_stan_regin_cd_gu
     description: "시군구 코드만 포함 코드"
-  - name: mart_apt_trade
+  - name: fct_apt_trade
     description: "아파트 매매 실거래가"
+  - name: dim_br_title_info
+    description: "건축물대장 표제부, 아파트 동 단위"
+  - name: dim_br_recap_title_info
+    description: "건축물대장 총괄표제부, 아파트 전체 단위 묶음"
+  - name: fct_apt_trade_detail
+    description: "아파트 매매 실거래가 종합 정보"

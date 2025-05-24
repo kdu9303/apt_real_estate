@@ -6,7 +6,7 @@ models:
     description: "아파트 매매 실거래가 데이터"
     columns:
       - name: aptTradeId
-        description: "유니크 해시 키(초기값 빈 문자열)"
+        description: "유니크 해시 키"
         data_tests:
           - unique
           - not_null
@@ -33,5 +33,29 @@ models:
         data_tests:
           - not_null
       - name: umdNm
+        data_tests:
+          - not_null
+  - name: stg_br_title_info
+    description: "건축물대장 표제부 조회 데이터"
+    columns:
+    - name: br_title_info_id
+      description: "유니크 해시 키"
+      data_tests:
+        - unique
+        - not_null
+    - name: platPlc
+      description: "대지위치"
+      data_tests:
+        - not_null
+  - name: stg_br_recap_title_info
+    description: "건축물대장 총괄표제부 조회 데이터"
+    columns:
+      - name: br_recap_title_info_id
+        description: "유니크 해시 키"
+        data_tests:
+          - unique
+          - not_null
+      - name: platPlc
+        description: "대지위치"
         data_tests:
           - not_null
