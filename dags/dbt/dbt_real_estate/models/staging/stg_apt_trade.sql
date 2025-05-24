@@ -70,12 +70,22 @@ final as (
 		) AS dealDate
 	    , c.dealDay -- 계약 일자
 	    , c.dealMonth -- 계약 월
-	    , c.dealYear -- 계약 년도도
+	    , c.dealYear -- 계약 년도
 	    , c.dealingGbn -- 거래 유형
 	    , c.estateAgentSggNm -- 중개사소재지
 	    , c.excluUseAr -- 전용면적
 	    , c.floor -- 층수
 	    , c.jibun -- 지번
+		, CASE
+			WHEN POSITION('-' IN c.jibun) > 0
+				THEN LPAD(SUBSTRING(c.jibun FROM 1 FOR POSITION('-' IN c.jibun) - 1), 4, '0')
+			ELSE LPAD(c.jibun, 4, '0')
+		END AS bun
+		, CASE
+			WHEN POSITION('-' IN c.jibun) > 0
+				THEN LPAD(SUBSTRING(c.jibun FROM POSITION('-' IN c.jibun) + 1), 4, '0')
+			ELSE '0000'
+		END AS ji
 	    , c.landLeaseholdGbn -- 토지임대부 아파트 여부
 	    , c.rgstDate -- 등기일자
 	    , c.slerGbn -- 매도자

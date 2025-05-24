@@ -36,7 +36,7 @@ class BrTitleInfo:
     platPlc: str  # 대지위치
     sigunguCd: str  # 시군구코드
     bjdongCd: str  # 법정동코드
-    platGbCd: str  # 대지구분코드
+    platGbCd: str  # 대지구분코드 0:대지 1:산 2:블록
     bun: str  # 번
     ji: str  # 지
     mgmBldrgstPk: str  # 관리건축물대장PK
@@ -83,6 +83,7 @@ class BrTitleInfo:
     atchBldCnt: str  # 부속건축물수
     atchBldArea: str  # 부속건축물면적(㎡)
     totDongTotArea: str  # 총동연면적(㎡)
+
     indrMechUtcnt: str  # 옥내기계식대수(대)
     indrMechArea: str  # 옥내기계식면적(㎡)
     oudrMechUtcnt: str  # 외부기계식대수(대)
@@ -173,8 +174,13 @@ class BrTitleInfoList:
         return items, total_pages, total_count
 
     def _create_unique_key(self, item_dict):
-        # dict를 BrTitleInfo dataclass로 변환 후 해시 생성
-        # None 값은 빈 문자열로 변환
+        # BrTitleInfo의 모든 필드명 가져오기
+        all_fields = BrTitleInfo.__dataclass_fields__.keys()
+        # 누락된 필드는 빈 문자열로 채우기
+        for field in all_fields:
+            if field not in item_dict:
+                item_dict[field] = ""
+        # None 값도 빈 문자열로 변환
         for k, v in item_dict.items():
             if v is None:
                 item_dict[k] = ""
@@ -187,7 +193,7 @@ class BrTitleInfoList:
 
         for row in address_df.iter_rows(named=True):
             bjdong_list, total_pages, total_count = self.fetch_br_title_info(
-                sigunguCd=row["gu_cd"], bjdongCd=row["bjdong_cd"]
+                sigunguCd=row["중위지역코드"], bjdongCd=row["법정동코드"]
             )
 
             if bjdong_list is None:
@@ -195,8 +201,8 @@ class BrTitleInfoList:
 
             for page in range(1, total_pages + 1):
                 bjdong_list, _, _ = self.fetch_br_title_info(
-                    sigunguCd=row["gu_cd"],
-                    bjdongCd=row["bjdong_cd"],
+                    sigunguCd=row["중위지역코드"],
+                    bjdongCd=row["법정동코드"],
                     pageNo=page,
                     numOfRows=100,
                 )
@@ -209,7 +215,7 @@ class BrTitleInfoList:
                     br_title_info_data_list.append(item)
 
                 logger.info(
-                    f"시군구코드: {row['gu_cd']}, 법정동코드: {row['bjdong_cd']}, TotalPage: {total_pages},  currentPage: {page}, totalCount: {total_count}"
+                    f"시군구코드: {row['중위지역코드']}, 법정동코드: {row['법정동코드']}, TotalPage: {total_pages},  currentPage: {page}, totalCount: {total_count}"
                 )
 
                 sleep(random.uniform(0.6, 0.9))
@@ -224,48 +230,50 @@ if __name__ == "__main__":
         "s3.secret-access-key": os.getenv("AWS_SECRET_ACCESS_KEY"),
     }
 
-    # sigungu_cd_df = fetch_iceberg_table_to_polars(
-    #     catalog=create_catalog("glue"),
-    #     namespace="mart-real-estate",
-    #     table_name="dim_stan_regin_cd",
-    #     storage_options=storage_options,
-    # )
+    sigungu_cd_df = fetch_iceberg_table_to_polars(
+        catalog=create_catalog("glue"),
+        namespace="mart-real-estate",
+        table_name="dim_stan_regin_cd",
+        storage_options=storage_options,
+    )
 
-    # sigungu_cd_df_filtered = sigungu_cd_df.select(
-    #     pl.col("gu_cd"),
-    #     pl.col("bjdong_cd"),
-    # ).collect()
+    sigungu_cd_df_filtered = sigungu_cd_df.select(
+        pl.col("중위지역코드"),
+        pl.col("법정동코드"),
+    ).collect()
 
     sggCd_dict = {
         "서초구": "11650",
         "송파구": "11710",
         "강남구": "11680",
-        "강동구": "11740",
-        "용산구": "11170",
+        # "강동구": "11740",
+        # "용산구": "11170",
+        # "광진구": "11215",
+        # "성동구": "11200",
     }
 
-    # br_title_info_list = BrTitleInfoList()
+    br_title_info_list = BrTitleInfoList()
 
-    # for sgg_name, sggCd in sggCd_dict.items():
-    #     print(f"시군구코드: {sgg_name} 진행중")
-    #     address_df = sigungu_cd_df_filtered.filter(pl.col("gu_cd") == sggCd)
-    #     print(address_df.shape)
+    for sgg_name, sggCd in sggCd_dict.items():
+        print(f"시군구코드: {sgg_name} 진행중")
+        address_df = sigungu_cd_df_filtered.filter(pl.col("중위지역코드") == sggCd)
+        print(address_df.shape)
 
-    #     br_title_info_df = br_title_info_list.concat_br_title_info_data_list(
-    #         address_df = address_df
-    #     )
+        br_title_info_df = br_title_info_list.concat_br_title_info_data_list(
+            address_df = address_df
+        )
 
-    #     file_name = f"br_title_info_{sgg_name}"
+        file_name = f"br_title_info_{sgg_name}"
 
-    #     upload_data_to_obj_storage_polars(
-    #         df=br_title_info_df,
-    #         endpoint_type="aws",
-    #         bucket_name="real-estate-raw",
-    #         dir_path="br_title_info",
-    #         file_name=file_name,
-    #         key=os.getenv("AWS_ACCESS_KEY_ID"),
-    #         secret=os.getenv("AWS_SECRET_ACCESS_KEY"),
-    #         partition_key=sggCd,
-    #     )
+        upload_data_to_obj_storage_polars(
+            df=br_title_info_df,
+            endpoint_type="aws",
+            bucket_name="real-estate-raw",
+            dir_path="br_title_info",
+            file_name=file_name,
+            key=os.getenv("AWS_ACCESS_KEY_ID"),
+            secret=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            partition_key=sggCd,
+        )
 
     # trigger_aws_glue_crawler(crawler_name="real-estate-raw-crawler")

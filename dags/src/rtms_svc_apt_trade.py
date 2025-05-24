@@ -95,9 +95,9 @@ class AptTradeList:
             logger.info("해당 요청에 대한 데이터가 없습니다.")
             return
 
-        if parsed_response["response"]["header"]["resultCode"] != "00":
+        if parsed_response["response"]["header"]["resultCode"] != "000":
             logger.error(f"Error Message: {parsed_response['response']['header']}")
-            raise Exception("요청 데이터가 없거나 잘못된 요청입니다.")
+            raise Exception("해당 요청은 잘못된 요청입니다.")
 
         return response_body["items"]["item"]
 
@@ -138,18 +138,21 @@ if __name__ == "__main__":
     apt_list = AptTradeList()
 
     sggCd_dict = {
-        "서초구": "11650",
-        "송파구": "11710",
-        "강남구": "11680",
-        "강동구": "11740",
-        "용산구": "11170",
+        # "서초구": "11650",
+        # "송파구": "11710",
+        # "강남구": "11680",
+        # "강동구": "11740",
+        # "용산구": "11170",
+        "광진구": "11215",
+        "성동구": "11200",
     }
 
-    years = [2024, 2025]
+    years = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
 
     for year in years:
         for sgg_name, sggCd in sggCd_dict.items():
             apt_data_list = apt_list.concat_apt_trade_data_list(year, sggCd)
+            print(apt_data_list.shape)
 
             file_name = f"apt_trade_{sgg_name}_{year}"
             # save_file_to_local(data=apt_data_list, file_name=file_name)
