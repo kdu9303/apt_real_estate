@@ -3,7 +3,7 @@ with source_apt_trade as (
 ),
 nullif_apt_trade as (
 	SELECT 
-		a.aptTradeId  -- 해시 키
+		a.apt_trade_id  -- 해시 키
 		, nullif(trim(a.aptDong), '') aptDong -- 아파트 동명
 	    , nullif(trim(a.aptNm), '') aptNm -- 아파트 이름
 	    , a.buildYear -- 건축년도
@@ -28,7 +28,7 @@ nullif_apt_trade as (
 ),
 typecast_apt_trade as (
 	SELECT 
-		b.aptTradeId  -- 해시 키
+		b.apt_trade_id  -- 해시 키
 		, b.aptDong -- 아파트 동명
 	    , b.aptNm -- 아파트 이름
 	    , b.buildYear -- 건축년도
@@ -54,7 +54,7 @@ typecast_apt_trade as (
 final as (
 	-- 칼럼 순서 정렬
 	SELECT 
-		c.aptTradeId  -- 해시 키
+		c.apt_trade_id  -- 해시 키
 		, c.sggCd -- 지역코드
 	    , c.umdNm -- 법정동명
 	    , c.aptNm -- 아파트 이름

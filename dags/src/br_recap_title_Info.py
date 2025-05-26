@@ -182,7 +182,7 @@ class BrRecapTitleInfoList:
 
         for row in address_df.iter_rows(named=True):
             bjdong_list, total_pages, total_count = self.fetch_br_recap_title_info(
-                sigunguCd=row["중위지역코드"], bjdongCd=row["법정동코드"]
+                sigunguCd=row["gu_cd"], bjdongCd=row["bjdong_cd"]
             )
 
             if bjdong_list is None:
@@ -190,8 +190,8 @@ class BrRecapTitleInfoList:
 
             for page in range(1, total_pages + 1):
                 bjdong_list, _, _ = self.fetch_br_recap_title_info(
-                    sigunguCd=row["중위지역코드"],
-                    bjdongCd=row["법정동코드"],
+                    sigunguCd=row["gu_cd"],
+                    bjdongCd=row["bjdong_cd"],
                     pageNo=page,
                     numOfRows=100,
                 )
@@ -204,7 +204,7 @@ class BrRecapTitleInfoList:
                     br_recap_title_info_data_list.append(item)
 
                 logger.info(
-                    f"시군구코드: {row['중위지역코드']}, 법정동코드: {row['법정동코드']}, TotalPage: {total_pages},  currentPage: {page}, totalCount: {total_count}"
+                    f"시군구코드: {row['gu_cd']}, 법정동코드: {row['bjdong_cd']}, TotalPage: {total_pages},  currentPage: {page}, totalCount: {total_count}"
                 )
 
                 sleep(random.uniform(0.6, 0.9))
@@ -227,8 +227,8 @@ if __name__ == "__main__":
         storage_options=storage_options,
     )
     sigungu_cd_df_filtered = sigungu_cd_df.select(
-        pl.col("중위지역코드"),
-        pl.col("법정동코드"),
+        pl.col("gu_cd"),
+        pl.col("bjdong_cd"),
     ).collect()
     
     sggCd_dict = {
@@ -246,7 +246,7 @@ if __name__ == "__main__":
     
     for sgg_name, sggCd in sggCd_dict.items():
         print(f"시군구코드: {sgg_name} 진행중")
-        address_df = sigungu_cd_df_filtered.filter(pl.col("중위지역코드") == sggCd)
+        address_df = sigungu_cd_df_filtered.filter(pl.col("gu_cd") == sggCd)
 
         br_recap_title_info_df = br_recap_title_info_list.concat_br_recap_title_info_data_list(
             address_df = address_df

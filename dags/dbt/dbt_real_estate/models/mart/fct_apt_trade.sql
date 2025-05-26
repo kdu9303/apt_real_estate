@@ -6,30 +6,31 @@ stg_stan_regin_cd as (
 ),
 final as (
 	SELECT 
-		a.sggCd as "지역코드" -- 지역코드
-		, b.bjdong_cd as "법정동코드"
-	    , a.umdNm as "법정동명" -- 법정동명
-	    , a.aptNm as "아파트이름" -- 아파트 이름
-		, a.aptDong as "아파트동명" -- 아파트 동명
-	    , a.buildYear as "건축년도" -- 건축년도
-	    , a.buyerGbn as "매수자" -- 매수자
-	    , a.cdealDay as "해제사유발생일자" -- 해제사유발생일자
-	    , a.cdealType as "해제여부" -- 해제여부
-	    , a.dealAmount as "거래금액" -- 거래 금액
-	    , a.dealDate as "거래일자" -- 거래일자
-	    , a.dealDay as "계약일자" -- 계약 일자
-	    , a.dealMonth as "계약월" -- 계약 월
-	    , a.dealYear as "계약년도" -- 계약 년도
-	    , a.dealingGbn as "거래유형" -- 거래 유형
-	    , a.estateAgentSggNm as "중개사소재지" -- 중개사소재지
-	    , a.excluUseAr as "전용면적" -- 전용면적
-	    , a.floor as "층수" -- 층수
-	    , a.jibun as "지번" -- 지번
-		, a.bun as "지번_번" -- 번
-		, a.ji as "지번_지" -- 지
-	    , a.landLeaseholdGbn as "토지임대부아파트여부" -- 토지임대부 아파트 여부
-	    , a.rgstDate as "등기일자" -- 등기일자
-	    , a.slerGbn as "매도자" -- 매도자
+		a.sggCd -- 지역코드
+		, b.bjdong_cd -- 법정동코드
+	    , a.umdNm -- 법정동명
+	    , a.aptNm -- 아파트 이름
+		, a.aptDong -- 아파트 동명
+	    , a.buildYear -- 건축년도
+	    , a.buyerGbn -- 매수자
+	    , a.cdealDay -- 해제사유발생일자
+	    , a.cdealType -- 해제여부
+	    , a.dealAmount -- 거래 금액
+	    , a.dealDate -- 거래일자
+	    , a.dealDay -- 계약 일자
+	    , a.dealMonth -- 계약 월
+	    , a.dealYear -- 계약 년도
+	    , a.dealingGbn -- 거래 유형
+	    , a.estateAgentSggNm -- 중개사소재지
+	    , a.excluUseAr -- 전용면적
+	    , a.floor -- 층수
+	    , a.jibun -- 지번
+		, a.bun -- 번
+		, a.ji -- 지
+	    , a.landLeaseholdGbn -- 토지임대부 아파트 여부
+	    , a.rgstDate -- 등기일자
+	    , a.slerGbn -- 매도자
+		, a.apt_trade_id -- 유니크 해시 키
 	FROM stg_apt_trade a    
 	LEFT JOIN stg_stan_regin_cd b
 		ON b.locathigh_cd != '0000000000'

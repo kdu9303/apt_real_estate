@@ -13,6 +13,7 @@ from utils import (
     save_file_to_local,
     remove_file_from_local,
     upload_data_to_obj_storage_polars,
+    trigger_aws_glue_crawler,
 )
 
 
@@ -51,7 +52,7 @@ class RTMSDataSvcAptTrade:
     sggCd: str  # 지역코드
     slerGbn: str  # 매도자
     umdNm: str  # 법정동명
-    aptTradeId: str = ""  # 유니크 해시 키(초기값 빈 문자열)
+    apt_trade_id: str = ""  # 유니크 해시 키(초기값 빈 문자열)
 
 
 class AptTradeList:
@@ -124,10 +125,10 @@ class AptTradeList:
             # api_data가 리스트 또는 단일 dict일 수 있음
             if isinstance(api_data, list):
                 for item in api_data:
-                    item["aptTradeId"] = self._create_unique_key(item)
+                    item["apt_trade_id"] = self._create_unique_key(item)
                     apt_data_list.append(item)
             else:
-                api_data["aptTradeId"] = self._create_unique_key(api_data)
+                api_data["apt_trade_id"] = self._create_unique_key(api_data)
                 apt_data_list.append(api_data)
 
         # return apt_data_list
@@ -138,16 +139,17 @@ if __name__ == "__main__":
     apt_list = AptTradeList()
 
     sggCd_dict = {
-        # "서초구": "11650",
-        # "송파구": "11710",
-        # "강남구": "11680",
-        # "강동구": "11740",
-        # "용산구": "11170",
+        "서초구": "11650",
+        "송파구": "11710",
+        "강남구": "11680",
+        "강동구": "11740",
+        "용산구": "11170",
         "광진구": "11215",
         "성동구": "11200",
     }
 
-    years = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+    years = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+    # years = [2025]
 
     for year in years:
         for sgg_name, sggCd in sggCd_dict.items():
@@ -176,5 +178,7 @@ if __name__ == "__main__":
                 secret=os.getenv("AWS_SECRET_ACCESS_KEY"),
                 partition_key=year,
             )
+            
+    trigger_aws_glue_crawler(crawler_name="real-estate-raw-crawler")
 
     # remove_file_from_local()

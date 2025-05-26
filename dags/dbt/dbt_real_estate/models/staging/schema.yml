@@ -5,7 +5,7 @@ models:
   - name: stg_apt_trade
     description: "아파트 매매 실거래가 데이터"
     columns:
-      - name: aptTradeId
+      - name: apt_trade_id
         description: "유니크 해시 키"
         data_tests:
           - unique
