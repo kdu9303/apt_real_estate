@@ -9,14 +9,20 @@ PROJECT_ROOT = os.path.dirname(
 )
 
 
-def create_hash_key(obj) -> str:
+def create_hash_key(obj, is_dataclass: bool = True) -> str:
     """
-    dataclass 인스턴스의 모든 필드를 str로 변환, trim, join하여 blake2b 해시로 unique key를 생성합니다.
+    dataclass 인스턴스, dict, list/tuple 모두 지원하여 unique key를 생성합니다.
+    
+    dataclass의 경우 모든 필드로 unique key를 생성합니다.
+    그 외의 경우 추출된 필드로만 생성합니다.
     """
-    # 모든 필드 값을 str로 변환 후 strip
-    values = [str(getattr(obj, field)).strip() for field in obj.__dataclass_fields__]
+    if is_dataclass:
+        values = [str(getattr(obj, field)).strip() for field in obj.__dataclass_fields__]
+    elif hasattr(obj, 'values'):  # dict
+        values = [str(v).strip() for v in obj.values()]
+    else:  # list, tuple 등
+        values = [str(v).strip() for v in obj]
     joined = "|".join(values)
-    # blake2b는 빠르고 충돌 가능성도 낮음
     hash_key = hashlib.blake2b(joined.encode("utf-8"), digest_size=16).hexdigest()
     return hash_key
 
@@ -67,3 +73,9 @@ def remove_file_from_local():
             if os.path.isfile(file_path):
                 os.remove(file_path)
         print(f"Removed all files in {tmp_dir}")
+
+
+def chunk_list(lst: list, chunk_size: int):
+    """리스트를 n개씩 chunk로 나누는 유틸 함수"""
+    for i in range(0, len(lst), chunk_size):
+        yield lst[i:i + chunk_size]

@@ -59,3 +59,11 @@ models:
         description: "대지위치"
         data_tests:
           - not_null
+  - name: stg_naver_land_geo_info
+    description: "네이버부동산 동단위 위도경도 정보"
+    columns:
+      - name: naver_land_geo_info_id
+        description: "유니크 해시 키"
+        data_tests:
+          - unique
+          - not_null

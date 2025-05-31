@@ -14,3 +14,7 @@ models:
     description: "건축물대장 총괄표제부, 아파트 전체 단위 묶음"
   - name: fct_apt_trade_detail
     description: "아파트 매매 실거래가 종합 정보"
+  - name: dim_naver_land_geo_info
+    description: "네이버부동산 동단위 위도경도 정보"
+  # - name: dim_naver_land_complex_info
+    # description: "네이버부동산 단지 정보"

@@ -15,7 +15,6 @@ from utils import (
     upload_data_to_obj_storage_polars,
     trigger_aws_glue_crawler,
 )
-# from utils import create_catalog
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
