@@ -67,3 +67,12 @@ models:
         data_tests:
           - unique
           - not_null
+  - name: stg_naver_land_complex_info_detail
+    description: "네이버부동산 단지 상세 정보"
+    columns:
+      - name: naver_land_complex_info_detail_id
+        description: "유니크 해시 키"
+        data_tests:
+          - unique
+          - not_null
+

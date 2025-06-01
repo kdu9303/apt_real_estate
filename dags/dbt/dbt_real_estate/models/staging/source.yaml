@@ -22,8 +22,11 @@ sources:
       - name: source_naver_land_geo_info
         identifier: source_naver_land_geo_info
         description: "네이버부동산 동단위 위도경도 정보"
-      # - name: source_naver_land_complex_info
-      #   identifier: source_naver_land_complex_info
-      #   description: "네이버부동산 단지 정보"
+      - name: source_naver_land_complex_info
+        identifier: source_naver_land_complex_info
+        description: "네이버부동산 단지 정보"
+      - name: source_naver_land_complex_info_detail
+        identifier: source_naver_land_complex_info_detail
+        description: "네이버부동산 단지 상세 정보"
 
 
