@@ -16,3 +16,4 @@ from .util import (
     remove_file_from_local,
     chunk_list,
 )
+from .const import SGG_CD_DICT
