@@ -12,14 +12,14 @@ from dataclasses import dataclass
 from curl_cffi.requests import AsyncSession
 from curl_cffi import requests, CurlHttpVersion
 from curl_cffi.requests.exceptions import Timeout
-from utils import (
+from src.utils import (
     create_hash_key,
     fetch_iceberg_table_to_polars,
     create_catalog,
     upload_data_to_obj_storage_polars,
     trigger_aws_glue_crawler,
 )
-from utils.const import SGG_CD_DICT
+from src.utils import SGG_CD_DICT
 
 
 logging.basicConfig(

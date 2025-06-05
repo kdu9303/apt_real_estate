@@ -5,7 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "astronomer-cosmos>=1.10.0",
+    "apache-airflow-providers-amazon==9.8.0",
+    "apache-airflow-providers-trino==6.2.0",
+    "astronomer-cosmos==1.10.0",
     "boto3>=1.37.3",
     "curl-cffi>=0.11.1",
     "dbt-athena>=1.9.4",
@@ -13,7 +15,7 @@ dependencies = [
     "dbt-duckdb>=1.9.3",
     "dbt-trino>=1.9.1",
     "duckdb>=1.2.2",
-    "polars==1.29.0",
+    "polars[pyarrow]==1.29.0",
     "pyarrow>=20.0.0",
     "pyiceberg[glue,s3fs]==0.9.1",
     "python-dotenv>=1.1.0",
