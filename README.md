@@ -1,7 +1,7 @@
-Overview
+Pipeline Architecture
 ========
 
-Welcome to Astronomer! This project was generated after you ran 'astro dev init' using the Astronomer CLI. This readme describes the contents of the project, as well as how to run Apache Airflow on your local machine.
+<p align="center"><img src="https://github.com/kdu9303/apt_real_estate/blob/main/img/apt-real-estate-architecture.png?raw=true" width="740" height="400"/></p>
 
 Project Contents
 ================
