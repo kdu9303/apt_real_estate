@@ -1,3 +1,8 @@
+{{ 
+  config(
+    tags = ["real-estate", "staging_naver_land_complex_info"]
+  ) 
+}}
 with source_naver_land_complex_info as (
     select * from {{ source('src_trino', 'source_naver_land_complex_info') }}
 ),

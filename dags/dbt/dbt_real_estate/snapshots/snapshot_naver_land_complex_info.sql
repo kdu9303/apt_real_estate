@@ -4,7 +4,8 @@
         unique_key='naver_land_complex_info_id',
         strategy='timestamp',
         updated_at='createdAt_timestamp',
-        hard_deletes='new_record'
+        hard_deletes='new_record',
+        tags = ["real-estate", "snapshot_naver_land_complex_info"]
     )
 }}
 
