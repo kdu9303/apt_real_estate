@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import asyncio
 import random
@@ -20,6 +21,12 @@ from src.utils import (
     trigger_aws_glue_crawler,
 )
 from src.utils.const import SGG_CD_DICT
+
+# 모듈 경로 설정 - local 실행 시 필요
+current_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = os.path.dirname(current_dir)  # src의 상위 디렉토리 (dags)
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -150,7 +157,7 @@ class NaverLandComplexInfoDetailList:
             "rightLon": lat_lon_bounds["rightLon"],
             "topLat": lat_lon_bounds["topLat"],
             "bottomLat": lat_lon_bounds["bottomLat"],
-            "realEstateType": "APT:PRE:ABYG:JGC",
+            "realEstateType": "APT:PRE:ABYG:JGC:OPST:JGB",
         }
 
         await sleep(random.uniform(0.3, 0.7))
@@ -214,10 +221,10 @@ class NaverLandComplexInfoDetailList:
         # 필요한 필드만 추출
         key_fields = [
             str(item_dict.get("markerId", "")),
-            str(item_dict.get("markerType", "")),
+            # str(item_dict.get("markerType", "")),
             str(item_dict.get("latitude", "")),
             str(item_dict.get("longitude", "")),
-            str(item_dict.get("complexName", "")),
+            # str(item_dict.get("complexName", "")),
         ]
         return create_hash_key(key_fields, is_dataclass=False)
 

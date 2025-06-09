@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import asyncio
 import random
@@ -12,6 +13,13 @@ from dataclasses import dataclass
 from curl_cffi.requests import AsyncSession
 from curl_cffi import requests, CurlHttpVersion
 from curl_cffi.requests.exceptions import Timeout
+
+# 모듈 경로 설정 - local 실행 시 필요
+current_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = os.path.dirname(current_dir)  # src의 상위 디렉토리 (dags)
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
 from src.utils import (
     create_hash_key,
     fetch_iceberg_table_to_polars,
@@ -19,7 +27,7 @@ from src.utils import (
     upload_data_to_obj_storage_polars,
     trigger_aws_glue_crawler,
 )
-from src.utils import SGG_CD_DICT
+from src.utils.const import SGG_CD_DICT
 
 
 logging.basicConfig(
@@ -89,7 +97,7 @@ class NaverLandComplexInfoList:
 
         params = {
             "cortarNo": cortarNo,  # 법정동코드 10자리
-            "realEstateType": "APT:PRE:ABYG:JGC",
+            "realEstateType": "APT:PRE:ABYG:JGC:OPST:JGB",
         }
 
         await sleep(random.uniform(0.3, 0.7))
@@ -148,7 +156,7 @@ class NaverLandComplexInfoList:
         # 필요한 필드만 추출
         key_fields = [
             str(item_dict.get("complexNo", "")),
-            str(item_dict.get("complexName", "")),
+            # str(item_dict.get("complexName", "")),
             str(item_dict.get("cortarNo", "")),
             str(item_dict.get("latitude", "")),
             str(item_dict.get("longitude", "")),
@@ -165,43 +173,43 @@ if __name__ == "__main__":
 
     sggCd_list = list(SGG_CD_DICT.values())
 
-    dim_stan_regin_cd_df = fetch_iceberg_table_to_polars(
-        catalog=create_catalog("glue"),
-        namespace="mart-real-estate",
-        table_name="dim_stan_regin_cd",
-        storage_options=storage_options,
-    )
+    # dim_stan_regin_cd_df = fetch_iceberg_table_to_polars(
+    #     catalog=create_catalog("glue"),
+    #     namespace="mart-real-estate",
+    #     table_name="dim_stan_regin_cd",
+    #     storage_options=storage_options,
+    # )
 
-    naver_land_complex_list = NaverLandComplexInfoList()
+    # naver_land_complex_list = NaverLandComplexInfoList()
 
-    for sggCd in sggCd_list:
+    # for sggCd in sggCd_list:
         
-        address_df = (
-            dim_stan_regin_cd_df.select(
-                pl.col("region_cd"),
-                pl.col("locathigh_cd"),
-            )
-            .filter(pl.col("locathigh_cd") == str(sggCd))
-            .collect()
-        )
+    #     address_df = (
+    #         dim_stan_regin_cd_df.select(
+    #             pl.col("region_cd"),
+    #             pl.col("locathigh_cd"),
+    #         )
+    #         .filter(pl.col("locathigh_cd") == str(sggCd))
+    #         .collect()
+    #     )
         
-        region_list = address_df.select(pl.col("region_cd")).to_series().to_list()
+    #     region_list = address_df.select(pl.col("region_cd")).to_series().to_list()
     
-        results_df = naver_land_complex_list.run_async_task(region_list)
+    #     results_df = naver_land_complex_list.run_async_task(region_list)
     
-        file_name = f"naver_land_complex_info_{sggCd}"
+    #     file_name = f"naver_land_complex_info_{sggCd}"
 
-        upload_data_to_obj_storage_polars(
-            df=results_df,
-            endpoint_type="aws",
-            bucket_name="real-estate-raw",
-            dir_path="naver_land_complex_info",
-            file_name=file_name,
-            key=os.getenv("AWS_ACCESS_KEY_ID"),
-            secret=os.getenv("AWS_SECRET_ACCESS_KEY"),
-            partition_key=sggCd,
-        )
+    #     upload_data_to_obj_storage_polars(
+    #         df=results_df,
+    #         endpoint_type="aws",
+    #         bucket_name="real-estate-raw",
+    #         dir_path="naver_land_complex_info",
+    #         file_name=file_name,
+    #         key=os.getenv("AWS_ACCESS_KEY_ID"),
+    #         secret=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    #         partition_key=sggCd,
+    #     )
 
-        print(f"{file_name} 처리 완료")
+    #     print(f"{file_name} 처리 완료")
 
-    trigger_aws_glue_crawler(crawler_name="real-estate-raw-crawler")
+    # trigger_aws_glue_crawler(crawler_name="real-estate-raw-crawler")
