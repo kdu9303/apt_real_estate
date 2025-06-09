@@ -1,3 +1,8 @@
+{{ 
+  config(
+    tags = ["real-estate", "fct_apt_trade"]
+  ) 
+}}
 with stg_apt_trade as (
     select * from {{ ref('stg_apt_trade') }}
 ),

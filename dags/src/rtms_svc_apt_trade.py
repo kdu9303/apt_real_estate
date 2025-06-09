@@ -1,4 +1,5 @@
 import os
+import sys
 import xmltodict
 import polars as pl
 from time import sleep
@@ -7,13 +8,21 @@ from dataclasses import dataclass
 from dotenv import load_dotenv
 from curl_cffi import requests
 import logging
-from utils import (
+
+# 모듈 경로 설정 - 실행 환경에 관계없이 작동
+current_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = os.path.dirname(current_dir)  # src의 상위 디렉토리 (dags)
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
+from src.utils import (
     create_yyyymm_form_date_list,
     create_hash_key,
     save_file_to_local,
     remove_file_from_local,
     upload_data_to_obj_storage_polars,
     trigger_aws_glue_crawler,
+    SGG_CD_DICT,
 )
 
 
@@ -56,8 +65,8 @@ class RTMSDataSvcAptTrade:
 
 
 class AptTradeList:
-    def __init__(self):
-        self.service_key = os.getenv("OPENAPI_API_KEY")
+    def __init__(self, service_key: str):
+        self.service_key = service_key
         self.base_url = (
             "http://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade?"
         )
@@ -75,7 +84,7 @@ class AptTradeList:
         self, sggCd, deal_month_day, numOfRows: int = 1_000_000
     ) -> dict:
         params = {
-            "LAWD_CD": sggCd,  # 지역코드
+            "LAWD_CD": sggCd,  # 지역코드(5자리) **중요**
             "DEAL_YMD": deal_month_day,  # 계약월
             "numOfRows": numOfRows,
             "serviceKey": self.service_key,
@@ -89,9 +98,9 @@ class AptTradeList:
         response_body = parsed_response["response"]["body"]
 
         logger.info(
-            f"Year Month: {deal_month_day}, totalCount: {response_body['totalCount']}"
+            f"sggCd: {sggCd} Year Month: {deal_month_day}, totalCount: {response_body['totalCount']}"
         )
-
+        
         if response_body["totalCount"] == "0":
             logger.info("해당 요청에 대한 데이터가 없습니다.")
             return
@@ -131,54 +140,43 @@ class AptTradeList:
                 api_data["apt_trade_id"] = self._create_unique_key(api_data)
                 apt_data_list.append(api_data)
 
-        # return apt_data_list
         return pl.DataFrame(apt_data_list)
 
 
 if __name__ == "__main__":
-    apt_list = AptTradeList()
+    apt_list = AptTradeList(service_key=os.getenv("OPENAPI_API_KEY"))
 
-    sggCd_dict = {
-        "서초구": "11650",
-        "송파구": "11710",
-        "강남구": "11680",
-        "강동구": "11740",
-        "용산구": "11170",
-        "광진구": "11215",
-        "성동구": "11200",
-    }
-
-    years = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+    # years = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
     # years = [2025]
-
-    for year in years:
-        for sgg_name, sggCd in sggCd_dict.items():
-            apt_data_list = apt_list.concat_apt_trade_data_list(year, sggCd)
-            print(apt_data_list.shape)
-
-            file_name = f"apt_trade_{sgg_name}_{year}"
-            # save_file_to_local(data=apt_data_list, file_name=file_name)
-
-            # upload_data_to_obj_storage_polars(
-            #     df=apt_data_list,
-            #     bucket_name="bronze",
-            #     dir_path="apt_trade",
-            #     file_name=file_name,
-            #     key=os.getenv("MINIO_ACCESS_KEY"),
-            #     secret=os.getenv("MINIO_SECRET_KEY"),
-            #     partition_key=year,
-            # )
-            upload_data_to_obj_storage_polars(
-                df=apt_data_list,
-                endpoint_type="aws",
-                bucket_name="real-estate-raw",
-                dir_path="apt_trade",
-                file_name=file_name,
-                key=os.getenv("AWS_ACCESS_KEY_ID"),
-                secret=os.getenv("AWS_SECRET_ACCESS_KEY"),
-                partition_key=year,
-            )
+    
+    
+    # for year in years:
+    #     for sgg_name, sggCd in SGG_CD_DICT.items():
+    #         sggCd = sggCd[:5]
+    #         apt_data_list = apt_list.concat_apt_trade_data_list(year, sggCd)
+    #         print(apt_data_list.shape)
             
-    trigger_aws_glue_crawler(crawler_name="real-estate-raw-crawler")
+    #         if apt_data_list.shape[0] == 0:
+    #             continue
+            
+    
+    #         file_name = f"apt_trade_{sgg_name}_{year}"
+            
+    #         upload_data_to_obj_storage_polars(
+    #             df=apt_data_list,
+    #             endpoint_type="aws",
+    #             bucket_name="real-estate-raw",
+    #             dir_path="apt_trade",
+    #             file_name=file_name,
+    #             key=os.getenv("AWS_ACCESS_KEY_ID"),
+    #             secret=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    #             partition_key=year,
+    #         )
+            
+    # trigger_aws_glue_crawler(crawler_name="real-estate-raw-crawler")
+
+    # row data 확인용
+    # apt_data_list = apt_list.fetch_apt_trade(sggCd = "11680", deal_month_day = "202208")
+    # print(apt_data_list)
 
     # remove_file_from_local()

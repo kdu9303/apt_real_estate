@@ -1,8 +1,13 @@
+{{ 
+  config(
+    tags = ["real-estate", "staging_apt_trade"]
+  ) 
+}}
 with source_apt_trade as (
     select * from {{ source('src_trino','source_apt_trade') }}
 ),
 nullif_apt_trade as (
-	SELECT 
+	SELECT distinct
 		a.apt_trade_id  -- 해시 키
 		, nullif(trim(a.aptDong), '') aptDong -- 아파트 동명
 	    , nullif(trim(a.aptNm), '') aptNm -- 아파트 이름
