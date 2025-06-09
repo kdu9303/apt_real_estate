@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from airflow.decorators import dag
 from pendulum import datetime
-from cosmos import DbtDag, DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig, RenderConfig
+from cosmos import DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig, RenderConfig
 from airflow.sdk import Asset
 
 # Asset 정의 - naver_land_complex_info_dag.py와 동일한 Asset 참조
@@ -61,6 +61,22 @@ def dbt_naver_land_complex_info():
         }
     )
     
+    snapshot_naver_land_complex_info_detail = DbtTaskGroup(
+        group_id="snapshot_naver_land_complex_info_detail",
+        project_config=ProjectConfig(DBT_PROJECT_PATH),
+        profile_config=profile_config,
+        execution_config=execution_config,
+        render_config=RenderConfig(
+            select=["tag:snapshot_naver_land_complex_info_detail"],
+            dbt_deps=True,
+        ),
+        operator_args={
+            # snapshot 멀티 스레드 실행 방지
+            # Iceberg의 메타데이터 커밋 과정에서 충돌이 발생할 수 있음
+            "dbt_cmd_flags": ["snapshot", "--select", "tag:snapshot_naver_land_complex_info_detail", "--threads", "1"],
+        }
+    )
+    
     dim_naver_land_complex_info = DbtTaskGroup(
         group_id="dim_naver_land_complex_info",
         project_config=ProjectConfig(DBT_PROJECT_PATH),
@@ -71,7 +87,7 @@ def dbt_naver_land_complex_info():
         )
     )
     
-    # 의존성 설정
-    staging_naver_land_complex_info >> snapshot_naver_land_complex_info >> dim_naver_land_complex_info
+    # 의존성 설정 - 스냅샷들을 순차적으로 실행하여 Iceberg 메타데이터 충돌 방지
+    staging_naver_land_complex_info >> snapshot_naver_land_complex_info >> snapshot_naver_land_complex_info_detail >> dim_naver_land_complex_info
     
 dbt_naver_land_complex_info()

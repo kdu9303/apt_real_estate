@@ -221,10 +221,8 @@ class NaverLandComplexInfoDetailList:
         # 필요한 필드만 추출
         key_fields = [
             str(item_dict.get("markerId", "")),
-            # str(item_dict.get("markerType", "")),
             str(item_dict.get("latitude", "")),
             str(item_dict.get("longitude", "")),
-            # str(item_dict.get("complexName", "")),
         ]
         return create_hash_key(key_fields, is_dataclass=False)
 

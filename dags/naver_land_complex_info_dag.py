@@ -2,6 +2,8 @@
 import os
 import logging
 import polars as pl
+import random
+import time
 from pendulum import datetime
 from airflow.hooks.base import BaseHook
 from airflow.decorators import dag, task
@@ -47,16 +49,37 @@ CATALOG = GlueCatalog(
 
 @dag(
     start_date=datetime(2025, 1, 1),
-    schedule=None,
+    schedule="0 23 * * *",  # 매일 11시에 시작
     catchup=False,
     tags=["real-estate", "naver_land_complex_info"],
     default_args={"owner": "data-eng", "retries": 1},
     doc_md="""
     ### 네이버 부동산 단지 정보 적재 DAG
     네이버 부동산 단지 정보를 수집 및 적재하는 DAG입니다.
+    매일 저녁 11시에 시작하여 0~30분 사이 랜덤 지연 후 실행됩니다.
     """,
 )
 def naver_land_complex_info():
+    @task
+    def random_delay():
+        """0~30분 사이 랜덤 지연 (매일 다른 시드 사용)"""
+        import datetime as dt
+        
+        # 매일 다른 시드 사용
+        today = dt.date.today()
+        random.seed(today.toordinal())
+        
+        delay_seconds = random.randint(0, 30 * 60)  # 0~1800초 (0~30분)
+        delay_minutes = delay_seconds // 60
+        delay_remaining_seconds = delay_seconds % 60
+        
+        logger.info(f"오늘의 랜덤 지연: {delay_minutes}분 {delay_remaining_seconds}초")
+        logger.info(f"예상 실행 시간: 23:{delay_minutes:02d}:{delay_remaining_seconds:02d}")
+        
+        time.sleep(delay_seconds)
+        logger.info("랜덤 지연 완료 - 실제 작업 시작")
+        return delay_seconds
+
     with TaskGroup(group_id="scrape_naver_land_complex_info") as scraping_tasks:
 
         @task
@@ -169,8 +192,8 @@ def naver_land_complex_info():
 
         glue_crawler_task
 
-    # task 그룹 순서 지정
-    scraping_tasks >> trigger_glue_crawler
+    # task 순서 지정: 랜덤 지연 -> 스크래핑 -> 크롤러
+    random_delay() >> scraping_tasks >> trigger_glue_crawler
 
 
 naver_land_complex_info()

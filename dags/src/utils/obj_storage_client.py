@@ -4,7 +4,8 @@ import s3fs
 import boto3
 import polars as pl
 from dotenv import load_dotenv
-from src.utils.util import read_file_path
+# from src.utils.util import read_file_path
+from .util import read_file_path
 
 
 load_dotenv()

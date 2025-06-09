@@ -156,7 +156,6 @@ class NaverLandComplexInfoList:
         # 필요한 필드만 추출
         key_fields = [
             str(item_dict.get("complexNo", "")),
-            # str(item_dict.get("complexName", "")),
             str(item_dict.get("cortarNo", "")),
             str(item_dict.get("latitude", "")),
             str(item_dict.get("longitude", "")),
