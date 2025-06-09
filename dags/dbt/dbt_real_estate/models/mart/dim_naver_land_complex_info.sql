@@ -1,8 +1,3 @@
-{{config(
-        materialized='view'
-    )
-}}
-
 with snapshot_naver_land_complex_info as (
     select * from {{ ref('snapshot_naver_land_complex_info') }}
 ),
