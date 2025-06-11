@@ -17,6 +17,7 @@ from src.utils import (
     fetch_iceberg_table_to_polars,
     upload_data_to_obj_storage_polars,
     SGG_CD_DICT,
+    send_failure_alert,
 )
 
 # Asset 정의
@@ -51,6 +52,7 @@ CATALOG = GlueCatalog(
     start_date=datetime(2025, 1, 1),
     schedule="0 23 * * *",  # 매일 11시에 시작
     catchup=False,
+    on_failure_callback=send_failure_alert,
     tags=["real-estate", "naver_land_complex_info"],
     default_args={"owner": "data-eng", "retries": 1},
     doc_md="""

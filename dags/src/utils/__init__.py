@@ -14,6 +14,8 @@ for path in paths_to_add:
         sys.path.insert(0, path)
 
 # utils 모듈들을 import
+from .slack_utils import send_failure_alert, send_success_alert
+
 from .util import (
     create_yyyymm_form_date_list,
     create_hash_key,
@@ -41,4 +43,6 @@ __all__ = [
     "fetch_iceberg_table_to_polars",
     "create_catalog",
     "SGG_CD_DICT",
+    "send_failure_alert",
+    "send_success_alert",
 ]

@@ -4,7 +4,7 @@ from airflow.decorators import dag
 from pendulum import datetime
 from cosmos import DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig, RenderConfig
 from airflow.sdk import Asset
-
+from src.utils import send_failure_alert
 
 rtms_svc_apt_trade_asset = Asset("rtms_svc_apt_trade_asset")
 
@@ -25,6 +25,7 @@ execution_config = ExecutionConfig(
     start_date=datetime(2025, 1, 1),
     schedule=[rtms_svc_apt_trade_asset],  # Asset 기반 스케줄링
     catchup=False,
+    on_failure_callback=send_failure_alert,
     tags=["real-estate", "dbt", "rtms_svc_apt_trade"],
     default_args={"owner": "data-eng", "retries": 1},
     doc_md="""

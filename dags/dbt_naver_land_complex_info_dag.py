@@ -4,6 +4,7 @@ from airflow.decorators import dag
 from pendulum import datetime
 from cosmos import DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig, RenderConfig
 from airflow.sdk import Asset
+from src.utils import send_failure_alert
 
 # Asset 정의 - naver_land_complex_info_dag.py와 동일한 Asset 참조
 naver_land_complex_info_asset = Asset("naver_land_complex_info_asset")
@@ -25,6 +26,7 @@ execution_config = ExecutionConfig(
     start_date=datetime(2025, 1, 1),
     schedule=[naver_land_complex_info_asset],  # Asset 기반 스케줄링
     catchup=False,
+    on_failure_callback=send_failure_alert,
     tags=["real-estate", "dbt", "naver_land_complex_info"],
     default_args={"owner": "data-eng", "retries": 1},
     doc_md="""

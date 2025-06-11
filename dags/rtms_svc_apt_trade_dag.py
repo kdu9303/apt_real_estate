@@ -12,6 +12,7 @@ from src.rtms_svc_apt_trade import AptTradeList
 from src.utils import (
     upload_data_to_obj_storage_polars,
     SGG_CD_DICT,
+    send_failure_alert,
 )
 
 
@@ -45,8 +46,9 @@ CATALOG = GlueCatalog(
 
 @dag(
     start_date=datetime(2025, 1, 1),
-    schedule=None,
+    schedule="0 20 * * 3,6",  # 매주 수요일(3), 토요일(6) 저녁 8시(20시)
     catchup=False,
+    on_failure_callback=send_failure_alert,
     tags=["real-estate", "rtms_svc_apt_trade"],
     default_args={"owner": "data-eng", "retries": 1},
     doc_md="""
