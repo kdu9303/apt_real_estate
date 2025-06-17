@@ -7,7 +7,7 @@ TRINO_HOST = "192.168.0.7"
 TRINO_PORT = 8085
 
 @dag(
-    start_date=datetime(2025, 1, 1),
+    start_date=datetime(2025, 1, 1, tz="Asia/Seoul"),
     schedule=None,
     catchup=False,
     tags=["network", "connectivity", "trino"],

@@ -49,7 +49,7 @@ CATALOG = GlueCatalog(
 
 
 @dag(
-    start_date=datetime(2025, 1, 1),
+    start_date=datetime(2025, 1, 1, tz="Asia/Seoul"),
     schedule="0 23 * * *",  # 매일 11시에 시작
     catchup=False,
     on_failure_callback=send_failure_alert,
