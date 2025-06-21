@@ -2,11 +2,12 @@ from datetime import datetime
 from airflow.decorators import dag
 from airflow.providers.standard.operators.python import PythonOperator
 from src.utils import send_failure_alert, send_success_alert
+import pendulum
 
 
 # 사용 예제 DAG
 @dag(
-    start_date=datetime(2025, 1, 1),
+    start_date=datetime(2025, 1, 1, tzinfo=pendulum.timezone("Asia/Seoul")),
     schedule=None,
     catchup=False,
     on_failure_callback=send_failure_alert,  # DAG 레벨 실패 콜백

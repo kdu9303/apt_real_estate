@@ -23,7 +23,7 @@ execution_config = ExecutionConfig(
 )
 
 @dag(
-    start_date=datetime(2025, 1, 1),
+    start_date=datetime(2025, 1, 1, tz="Asia/Seoul"),
     schedule=[naver_land_complex_info_asset],  # Asset 기반 스케줄링
     catchup=False,
     on_failure_callback=send_failure_alert,

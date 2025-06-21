@@ -22,7 +22,7 @@ execution_config = ExecutionConfig(
 )
 
 @dag(
-    start_date=datetime(2025, 1, 1),
+    start_date=datetime(2025, 1, 1, tz="Asia/Seoul"),
     schedule=[rtms_svc_apt_trade_asset],  # Asset 기반 스케줄링
     catchup=False,
     on_failure_callback=send_failure_alert,
