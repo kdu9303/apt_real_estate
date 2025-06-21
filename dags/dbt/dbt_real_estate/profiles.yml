@@ -23,6 +23,17 @@ dbt_real_estate:
       schema: real-estate
       threads: 4
 
+    airflow_mac:
+      type: trino
+      method: none
+      user: admin
+      password: ''
+      database: iceberg
+      host: 192.168.0.5
+      port: 8085
+      schema: real-estate
+      threads: 4
+
     prod:
       type: athena
       s3_staging_dir: s3://etl-project-athena-query-results-bucket-20220919/
