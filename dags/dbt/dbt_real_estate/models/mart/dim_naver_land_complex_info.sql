@@ -57,7 +57,7 @@ final as (
         , b.medianDealPrice -- 최근 거래된 매매가(만원)
         , b.medianRentPrice -- 최근 거래된 월세가(만원)
         , b.medianShortTermRentPrice -- 최근 거래된 단기가(만원)
-        , a.createdAt -- 생성일자(자료 추출 기준)
+        , b.createdAt -- snapshot_naver_land_complex_info_detail 테이블 기준 생성일자(매물 건수 업데이트 기준)
     
     from snapshot_naver_land_complex_info a
     left join snapshot_naver_land_complex_info_detail b
